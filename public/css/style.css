@@ -25,9 +25,16 @@ footer, header, hgroup, menu, nav, section {
 html, body {
     width: 100%;
     height: 100%;
-    margin: 0;
 }
-
+.layout {
+    position: absolute;
+    right: 0px;
+    left: 0px;
+    top: 0px;
+    bottom: 0px;
+    padding: 15px;
+    overflow: hidden;
+}
 .free-wall {
     width: 100%;
     height: 100%;
@@ -35,14 +42,4 @@ html, body {
 .brick {
     overflow: hidden;
     display: none;
-}
-.brick img {
-    margin: 0;
-    display: block;
-}
-.desktop {
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }

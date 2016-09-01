@@ -7,7 +7,9 @@
         <link rel="stylesheet" type="text/css" href="css/style.css" />
     </head>
     <body>
-        <div id="container" class="free-wall"></div>
+        <div class="layout">
+            <div id="container" class="free-wall"></div>
+        </div>
         <script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
         <script type="text/javascript" src="js/lodash.min.js"></script>
         <script type="text/javascript" src="js/freewall.min.js"></script>
@@ -30,10 +32,10 @@
                 wall.reset({
                     selector: '.brick',
                     animate: true,
-                    gutterX: 0,
-                    gutterY: 0,
+                    gutterX: 15,
+                    gutterY: 15,
                     onResize: function() {
-                        wall.refresh($(window).width() - 5, $(window).height() - 5);
+                        wall.fitZone($(window).width() - 30, $(window).height() - 30);
                     },
                     onComplete: function() {
                         $.each($(".brick img"), function(i, val) {
@@ -50,11 +52,9 @@
                         });
                     }
                 });
-                wall.fillHoles();
-                wall.fitZone($(window).width() - 5, $(window).height() - 5);
+                wall.fitZone($(window).width() - 30, $(window).height() - 30);
             }
 
-            // update grids
             new Promise(function(resolve, reject) {
                 $.ajax({
                     method: 'GET',
@@ -70,7 +70,7 @@
             })
             .then(function(data) {
                 var srcs = extractLinks(data);
-                setInterval(function() {
+                var intv = setInterval(function() {
                     var $brick = $("<div class='brick' />");
                     var $img = 
                         $("<img />")
@@ -89,7 +89,7 @@
                                 freewall();
                             });
                     $container.append($brick.append($img));
-                }, 1000)
+                }, 1000);
             });
         });
         </script>
