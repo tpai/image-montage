@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Image Montage</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+        <link rel="stylesheet" type="text/css" href="css/style.css" />
+    </head>
+    <body>
+        <div id="container" class="free-wall"></div>
+        <script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
+        <script type="text/javascript" src="js/lodash.min.js"></script>
+        <script type="text/javascript" src="js/freewall.min.js"></script>
+        <script type="text/javascript">
+        $(function() {
+            var $container = $('#container');
+
+            function extractLinks(data) {
+                var arr = [];
+                _.map(data, function(val) {
+                    if(val.type) {
+                        arr.push(val.link);
+                    }
+                });
+                return arr;
+            }
+
+            function freewall() {
+                var wall = new Freewall('#container');
+                wall.reset({
+                    selector: '.brick',
+                    animate: true,
+                    gutterX: 0,
+                    gutterY: 0,
+                    onResize: function() {
+                        wall.refresh($(window).width() - 5, $(window).height() - 5);
+                    },
+                    onComplete: function() {
+                        $.each($(".brick img"), function(i, val) {
+                            var pWidth = $(val).parent().css("width");
+                            var pHeight = $(val).parent().css("height");
+
+                            $(val).attr("style", "width: "+pWidth);
+                            if(
+                                parseInt($(val).css("height"), 10) < parseInt(pHeight, 10)
+                            ) {
+                                $(val).attr("style", "height: "+pHeight);
+                            }
+                            $(val).parent().fadeIn(500);
+                        });
+                    }
+                });
+                wall.fillHoles();
+                wall.fitZone($(window).width() - 5, $(window).height() - 5);
+            }
+
+            // update grids
+            new Promise(function(resolve, reject) {
+                $.ajax({
+                    method: 'GET',
+                    url: 'https://api.imgur.com/3/gallery/random/random/2',
+                    headers: {
+                        Authorization: '{{ CLIENT_ID }}'
+                    }
+                }).done(function(data) {
+                    resolve(data.data);
+                }).fail(function(xhr, status, err) {
+                    reject(err);
+                })
+            })
+            .then(function(data) {
+                var srcs = extractLinks(data);
+                setInterval(function() {
+                    var $brick = $("<div class='brick' />");
+                    var $img = 
+                        $("<img />")
+                            .prop('src', srcs.pop())
+                            .load(function() {
+                                var $div = $(this).parent();
+                                var randWidth = _.random(220, 320);
+                                var nWidth = $(this).prop('naturalWidth');
+                                var nHeight = $(this).prop('naturalHeight');
+                                var vWidth = Math.floor(randWidth);
+                                var vHeight = Math.floor(nHeight*randWidth/nWidth);
+                                $div.attr('data-width', vWidth);
+                                $div.attr('data-height', vHeight);
+                                $div.css('width', vWidth+'px');
+                                $div.css('height', vHeight+'px');
+                                freewall();
+                            });
+                    $container.append($brick.append($img));
+                }, 1000)
+            });
+        });
+        </script>
+    </body>
+</html>
