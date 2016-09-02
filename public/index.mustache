@@ -16,9 +16,37 @@
         <script type="text/javascript" src="js/freewall.min.js"></script>
         <script type="text/javascript">
         $(function() {
-            var $container = $('#container');
+            var id = 0;
+            fetchImages(++id, data => imageMontage.init(data));
+
+            // reload every 60s
+            setInterval(() => {
+                for (var i = 1; i < window.setInterval("", 9999); i++)
+                    window.clearInterval(i);
+                fetchImages(++id, data => imageMontage.displayImages(data));
+            }, 60000);
+
+            function fetchImages(id, cb) {
+                new Promise(function(resolve, reject) {
+                    $.ajax({
+                        method: 'GET',
+                        url: 'https://api.imgur.com/3/gallery/random/random/'+id,
+                        headers: {
+                            Authorization: '{{ CLIENT_ID }}'
+                        }
+                    }).done(function(data) {
+                        resolve(data.data);
+                    }).fail(function(xhr, status, err) {
+                        reject(err);
+                    })
+                })
+                .then(function(data) {
+                    cb(data);
+                });
+            }
+
             var imageMontage = {
-                init: function() {
+                init: function(data) {
                     var temp = "<div class='brick' style='width:{width}px; height: {height}px; background-color: {color}'><div class='cover'></div></div>";
                     var colour = [
                         "lightblue",
@@ -40,20 +68,11 @@
                         color = colour[colour.length * Math.random() << 0];
                         html += temp.replace(/\{height\}/g, h*150).replace(/\{width\}/g, w*150).replace("{color}", color);
                     }
-                    $container.html(html);
+                    $("#container").html(html);
                     this.freewall();
 
                     // fetch random image from imgur
-                    var counter = 1;
-                    this.fetchImages(counter);
-
-                    // reload every 60s
-                    setInterval(() => {
-                        counter ++;
-                        for (var i = 1; i < window.setInterval("", 9999); i++)
-                            window.clearInterval(i);
-                        this.fetchImages(counter);
-                    }, 60000);
+                    this.displayImages(data);
                 },
                 preloadImage: function(arr) {
                     $("#preload").html("");
@@ -108,67 +127,52 @@
                     });
                     wall.fitZone($(window).width() - 30, $(window).height() - 30);
                 },
-                fetchImages: function(i) {
+                displayImages: function(data) {
+
                     var self = this;
-                    new Promise(function(resolve, reject) {
-                        $.ajax({
-                            method: 'GET',
-                            url: 'https://api.imgur.com/3/gallery/random/random/'+i,
-                            headers: {
-                                Authorization: '{{ CLIENT_ID }}'
-                            }
-                        }).done(function(data) {
-                            resolve(data.data);
-                        }).fail(function(xhr, status, err) {
-                            reject(err);
-                        })
-                    })
-                    .then(function(data) {
-                        var srcs = _.filter(
-                            _.map(data, function(val) {
-                                if(val.type)return val.link;
-                            }), function(link) {
-                                return link !== undefined;
-                            });
-                        self.preloadImage(srcs);
+                    var srcs = _.filter(
+                        _.map(data, function(val) {
+                            if(val.type)return val.link;
+                        }), function(link) {
+                            return link !== undefined;
+                        });
+                    self.preloadImage(srcs);
 
-                        var arr = $(".cover");
-                        var i = setInterval(function() {
-                            var $target = $(arr.splice(0, 1));
-                            // width and height of brick
-                            var pWidth = parseInt($target.parent().css("width"), 10);
-                            var pHeight = parseInt($target.parent().css("height"), 10);
-                            var $img =
-                                $("<img src='"+srcs.shift()+"' class='cover' />")
-                                    .load(function() {
-                                        // natural width and height of image
-                                        var nWidth = $img.prop("naturalWidth");
-                                        var nHeight = $img.prop("naturalHeight");
+                    var arr = $(".cover");
+                    var i = setInterval(function() {
+                        var $target = $(arr.splice(0, 1));
+                        // width and height of brick
+                        var pWidth = parseInt($target.parent().css("width"), 10);
+                        var pHeight = parseInt($target.parent().css("height"), 10);
+                        var $img =
+                            $("<img src='"+srcs.shift()+"' class='cover' />")
+                                .load(function() {
+                                    // natural width and height of image
+                                    var nWidth = $img.prop("naturalWidth");
+                                    var nHeight = $img.prop("naturalHeight");
 
-                                        $target
-                                            .parent()
-                                            .fadeOut(500, function() {
-                                                $target.replaceWith($img);
-                                                self.fixImageSize({
-                                                    target: $img,
-                                                    parent: {
-                                                        width: pWidth,
-                                                        height: pHeight
-                                                    },
-                                                    child: {
-                                                        width: nWidth,
-                                                        height: nHeight
-                                                    }
-                                                });
-                                            })
-                                            .fadeIn(500);
-                                    });
-                            arr.length === 0 && clearInterval(i);
-                        }, 3000);
-                    });
+                                    $target
+                                        .parent()
+                                        .fadeOut(500, function() {
+                                            $target.replaceWith($img);
+                                            self.fixImageSize({
+                                                target: $img,
+                                                parent: {
+                                                    width: pWidth,
+                                                    height: pHeight
+                                                },
+                                                child: {
+                                                    width: nWidth,
+                                                    height: nHeight
+                                                }
+                                            });
+                                        })
+                                        .fadeIn(500);
+                                });
+                        arr.length === 0 && clearInterval(i);
+                    }, 3000);
                 }
             };
-            imageMontage.init();
         });
         </script>
     </body>
