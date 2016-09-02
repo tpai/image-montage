@@ -32,7 +32,13 @@
                     })
                 })
                 .then(function(data) {
-                    cb(data);
+                    cb(
+                        _.filter(_.map(data, function(val) {
+                            if(val.type)return val.link;
+                        }), function(link) {
+                            return link !== undefined;
+                        })
+                    );
                 });
             }
 
@@ -40,13 +46,13 @@
             var im = new ImageMontage('#montage');
 
             var id = 0;
-            fetchImages(++id, data => im.initBricks(data));
+            fetchImages(++id, function(data) { im.initBricks(data); });
 
             // reload every 60s
-            setInterval(() => {
+            setInterval(function() {
                 for (var i = 1; i < window.setInterval("", 9999); i++)
                     window.clearInterval(i);
-                fetchImages(++id, data => im.displayImages(data));
+                fetchImages(++id, function(data) { im.displayImages(data); });
             }, 60000);
 
         });

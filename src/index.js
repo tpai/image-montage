@@ -87,13 +87,7 @@
             wall.fitZone($(window).width() - 30, $(window).height() - 30);
         }
         displayImages = data => {
-            let srcs = _.filter(
-                _.map(data, val => {
-                    if(val.type)return val.link;
-                }), link => {
-                    return link !== undefined;
-                });
-            this.preloadImage(srcs);
+            this.preloadImage(data);
 
             let arr = $(".cover");
             let i = setInterval(() => {
@@ -102,7 +96,7 @@
                 const pWidth = parseInt($target.parent().css("width"), 10);
                 const pHeight = parseInt($target.parent().css("height"), 10);
                 let $img =
-                    $("<img src='"+srcs.shift()+"' class='cover' />")
+                    $("<img src='"+data.shift()+"' class='cover' />")
                         .load(() => {
                             // natural width and height of image
                             const nWidth = $img.prop("naturalWidth");
