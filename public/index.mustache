@@ -32,6 +32,7 @@
                         "lightseagreen"
                     ];
 
+                    // add empty brick as placeholder
                     var w = 1, h = 1, html = '', color = '', limitItem = 35;
                     for (var i = 0; i < limitItem; ++i) {
                         h = 1 + 2 * Math.random() << 0;
@@ -42,8 +43,11 @@
                     $container.html(html);
                     this.freewall();
 
+                    // fetch random image from imgur
                     var counter = 1;
                     this.fetchImages(counter);
+
+                    // reload every 60s
                     setInterval(() => {
                         counter ++;
                         for (var i = 1; i < window.setInterval("", 9999); i++)
@@ -51,25 +55,35 @@
                         this.fetchImages(counter);
                     }, 60000);
                 },
-                extractLinks: function(data) {
-                    var arr = [];
-                    _.map(data, function(val) {
-                        if(val.type) {
-                            arr.push(val.link);
-                        }
-                    });
-                    return arr;
-                },
                 preloadImage: function(arr) {
                     $("#preload").html("");
                     _.map(arr, function(val) {
                         $("#preload").append("<img src='"+val+"' />");
                     });
                 },
+                fixImageSize: function(data) {
+                    var $target = data.target;
+                    var parent = data.parent;
+                    var pWidth = parseInt(parent.width, 10);
+                    var pHeight = parseInt(parent.height, 10);
+                    var child = data.child;
+                    var cWidth = parseInt(child.width, 10);
+                    var cHeight = parseInt(child.height, 10);
+
+                    if(cHeight*pWidth/cWidth < pHeight) {
+                        $target.attr("style", "height: "+pHeight+"px");
+                    }
+                    else {
+                        $target.attr("style", "width: "+pWidth+"px");
+                    }
+                },
                 freewall: function() {
+                    var self = this;
                     var wall = new Freewall('#container');
                     wall.reset({
                         selector: '.brick',
+                        cellW: 160,
+                        cellH: 160,
                         gutterX: 15,
                         gutterY: 15,
                         onResize: function() {
@@ -77,16 +91,18 @@
                         },
                         onComplete: function() {
                             $.each($(".brick img"), function(i, val) {
-                                var pWidth = $(val).parent().css("width");
-                                var pHeight = $(val).parent().css("height");
-
-                                $(val).attr("style", "width: "+pWidth);
-                                if(
-                                    parseInt($(val).css("height"), 10) < parseInt(pHeight, 10)
-                                ) {
-                                    $(val).attr("style", "height: "+pHeight);
-                                }
-                                $(val).parent().fadeIn(500);
+                                var $img = $(val);
+                                self.fixImageSize({
+                                    target: $img,
+                                    parent: {
+                                        width: $img.parent().css("width"),
+                                        height: $img.parent().css("height")
+                                    },
+                                    child: {
+                                        width: $img.css("width"),
+                                        height: $img.css("height")
+                                    }
+                                });
                             });
                         }
                     });
@@ -108,32 +124,45 @@
                         })
                     })
                     .then(function(data) {
-                        var srcs = self.extractLinks(data);
+                        var srcs = _.filter(
+                            _.map(data, function(val) {
+                                if(val.type)return val.link;
+                            }), function(link) {
+                                return link !== undefined;
+                            });
                         self.preloadImage(srcs);
+
                         var arr = $(".cover");
                         var i = setInterval(function() {
                             var $target = $(arr.splice(0, 1));
+                            // width and height of brick
                             var pWidth = parseInt($target.parent().css("width"), 10);
                             var pHeight = parseInt($target.parent().css("height"), 10);
                             var $img =
-                                $("<img class='cover' />")
-                                    .prop('src', srcs.shift())
+                                $("<img src='"+srcs.shift()+"' class='cover' />")
                                     .load(function() {
-                                        var nWidth = $(this).prop('naturalWidth');
-                                        var nHeight = $(this).prop('naturalHeight');
+                                        // natural width and height of image
+                                        var nWidth = $img.prop("naturalWidth");
+                                        var nHeight = $img.prop("naturalHeight");
 
-                                        $(this).attr("style", "width: "+pWidth);
-                                        if(nHeight*pWidth/nWidth < pHeight) {
-                                            $(this).attr("style", "height: "+pHeight+"px");
-                                        }
-                                        self.freewall();
+                                        $target
+                                            .parent()
+                                            .fadeOut(500, function() {
+                                                $target.replaceWith($img);
+                                                self.fixImageSize({
+                                                    target: $img,
+                                                    parent: {
+                                                        width: pWidth,
+                                                        height: pHeight
+                                                    },
+                                                    child: {
+                                                        width: nWidth,
+                                                        height: nHeight
+                                                    }
+                                                });
+                                            })
+                                            .fadeIn(500);
                                     });
-                            $target
-                                .parent()
-                                .fadeOut(500, function() {
-                                    $target.replaceWith($img);
-                                })
-                                .fadeIn(500);
                             arr.length === 0 && clearInterval(i);
                         }, 3000);
                     });
