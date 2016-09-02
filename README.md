@@ -38,3 +38,31 @@ npm run dev
 ```
 npm run build
 ```
+
+## Usage
+
+**Init**
+
+Define default container.
+
+```
+var im = new ImageMontage('#targetContainerId');
+```
+
+**First Time Launch**
+
+Many random size bricks will fill up window, and start to replace bricks with images which are preloaded.
+
+```
+im.initBricks(data);
+```
+
+**Infinite Refresh**
+
+Call API for new images every 60s and display.
+
+```
+setInterval(function() {
+    fetchImages(function(data) { im.displayImages(data); });
+}, 60000);
+```
