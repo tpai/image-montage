@@ -8,24 +8,15 @@
     </head>
     <body>
         <div class="layout">
-            <div id="container" class="free-wall"></div>
+            <div id="montage" class="free-wall"></div>
         </div>
         <div id="preload" style="display: none" />
         <script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
         <script type="text/javascript" src="js/lodash.min.js"></script>
         <script type="text/javascript" src="js/freewall.min.js"></script>
+        <script type="text/javascript" src="js/imagemontage.min.js"></script>
         <script type="text/javascript">
         $(function() {
-            var id = 0;
-            fetchImages(++id, data => imageMontage.init(data));
-
-            // reload every 60s
-            setInterval(() => {
-                for (var i = 1; i < window.setInterval("", 9999); i++)
-                    window.clearInterval(i);
-                fetchImages(++id, data => imageMontage.displayImages(data));
-            }, 60000);
-
             function fetchImages(id, cb) {
                 new Promise(function(resolve, reject) {
                     $.ajax({
@@ -45,134 +36,19 @@
                 });
             }
 
-            var imageMontage = {
-                init: function(data) {
-                    var temp = "<div class='brick' style='width:{width}px; height: {height}px; background-color: {color}'><div class='cover'></div></div>";
-                    var colour = [
-                        "lightblue",
-                        "lightcyan",
-                        "lightcoral",
-                        "lightpink",
-                        "lightgrey",
-                        "lightgreen",
-                        "lightsalmon",
-                        "lightskyblue",
-                        "lightseagreen"
-                    ];
+            // init
+            var im = new ImageMontage('#montage');
 
-                    // add empty brick as placeholder
-                    var w = 1, h = 1, html = '', color = '', limitItem = 35;
-                    for (var i = 0; i < limitItem; ++i) {
-                        h = 1 + 2 * Math.random() << 0;
-                        w = 2 + 2 * Math.random() << 0;
-                        color = colour[colour.length * Math.random() << 0];
-                        html += temp.replace(/\{height\}/g, h*150).replace(/\{width\}/g, w*150).replace("{color}", color);
-                    }
-                    $("#container").html(html);
-                    this.freewall();
+            var id = 0;
+            fetchImages(++id, data => im.initBricks(data));
 
-                    // fetch random image from imgur
-                    this.displayImages(data);
-                },
-                preloadImage: function(arr) {
-                    $("#preload").html("");
-                    _.map(arr, function(val) {
-                        $("#preload").append("<img src='"+val+"' />");
-                    });
-                },
-                fixImageSize: function(data) {
-                    var $target = data.target;
-                    var parent = data.parent;
-                    var pWidth = parseInt(parent.width, 10);
-                    var pHeight = parseInt(parent.height, 10);
-                    var child = data.child;
-                    var cWidth = parseInt(child.width, 10);
-                    var cHeight = parseInt(child.height, 10);
+            // reload every 60s
+            setInterval(() => {
+                for (var i = 1; i < window.setInterval("", 9999); i++)
+                    window.clearInterval(i);
+                fetchImages(++id, data => im.displayImages(data));
+            }, 60000);
 
-                    if(cHeight*pWidth/cWidth < pHeight) {
-                        $target.attr("style", "height: "+pHeight+"px");
-                    }
-                    else {
-                        $target.attr("style", "width: "+pWidth+"px");
-                    }
-                },
-                freewall: function() {
-                    var self = this;
-                    var wall = new Freewall('#container');
-                    wall.reset({
-                        selector: '.brick',
-                        cellW: 160,
-                        cellH: 160,
-                        gutterX: 15,
-                        gutterY: 15,
-                        onResize: function() {
-                            wall.fitZone($(window).width() - 30, $(window).height() - 30);
-                        },
-                        onComplete: function() {
-                            $.each($(".brick img"), function(i, val) {
-                                var $img = $(val);
-                                self.fixImageSize({
-                                    target: $img,
-                                    parent: {
-                                        width: $img.parent().css("width"),
-                                        height: $img.parent().css("height")
-                                    },
-                                    child: {
-                                        width: $img.css("width"),
-                                        height: $img.css("height")
-                                    }
-                                });
-                            });
-                        }
-                    });
-                    wall.fitZone($(window).width() - 30, $(window).height() - 30);
-                },
-                displayImages: function(data) {
-
-                    var self = this;
-                    var srcs = _.filter(
-                        _.map(data, function(val) {
-                            if(val.type)return val.link;
-                        }), function(link) {
-                            return link !== undefined;
-                        });
-                    self.preloadImage(srcs);
-
-                    var arr = $(".cover");
-                    var i = setInterval(function() {
-                        var $target = $(arr.splice(0, 1));
-                        // width and height of brick
-                        var pWidth = parseInt($target.parent().css("width"), 10);
-                        var pHeight = parseInt($target.parent().css("height"), 10);
-                        var $img =
-                            $("<img src='"+srcs.shift()+"' class='cover' />")
-                                .load(function() {
-                                    // natural width and height of image
-                                    var nWidth = $img.prop("naturalWidth");
-                                    var nHeight = $img.prop("naturalHeight");
-
-                                    $target
-                                        .parent()
-                                        .fadeOut(500, function() {
-                                            $target.replaceWith($img);
-                                            self.fixImageSize({
-                                                target: $img,
-                                                parent: {
-                                                    width: pWidth,
-                                                    height: pHeight
-                                                },
-                                                child: {
-                                                    width: nWidth,
-                                                    height: nHeight
-                                                }
-                                            });
-                                        })
-                                        .fadeIn(500);
-                                });
-                        arr.length === 0 && clearInterval(i);
-                    }, 3000);
-                }
-            };
         });
         </script>
     </body>
