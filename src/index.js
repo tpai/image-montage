@@ -50,10 +50,14 @@
             const cHeight = parseInt(child.height, 10);
 
             if(cHeight*pWidth/cWidth < pHeight) {
-                $(target).attr("style", "height: "+pHeight+"px");
+                const nWidth = cWidth*pHeight/cHeight
+                const centerX = (nWidth-pWidth)/2;
+                $(target).attr("style", "height: "+pHeight+"px; margin-left: -"+centerX+"px");
             }
             else {
-                $(target).attr("style", "width: "+pWidth+"px");
+                const nHeight = cHeight*pWidth/cWidth
+                const centerY = (nHeight-pHeight)/2;
+                $(target).attr("style", "width: "+pWidth+"px; margin-top: -"+centerY+"px");
             }
         }
         freewall = () => {
