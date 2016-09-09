@@ -4,11 +4,12 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "bnr dev-server & bnr dev",
+    "start": "bnr dev & bnr web-server",
+    "prod": "bnr build && bnr web-server",
     "postinstall": "[ -f .env ] || cp .env.example .env"
   },
   "betterScripts": {
-    "dev-server": "node server.js",
+    "web-server": "node server.js",
     "dev": "babel src/index.js --watch --out-file public/js/imagemontage.min.js",
     "build": "NODE_ENV=production babel src/index.js --out-file public/js/imagemontage.min.js"
   },
