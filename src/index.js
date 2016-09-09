@@ -25,7 +25,7 @@
                 w = 2 + 2 * Math.random() << 0;
                 color = colour[colour.length * Math.random() << 0];
                 html += `
-                    <div class='brick' style='width:${w*150}px; height: ${h*150}px; background-color: ${color}'>
+                    <div class='brick' style='width:${w*100}px; height: ${h*100}px; background-color: ${color}'>
                         <div class='cover'></div>
                     </div>
                 `;
@@ -64,8 +64,8 @@
             const wall = new Freewall(this.rootId);
             wall.reset({
                 selector: '.brick',
-                cellW: 160,
-                cellH: 160,
+                cellW: 150,
+                cellH: 150,
                 gutterX: 15,
                 gutterY: 15,
                 onResize: () => {
